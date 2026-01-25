@@ -1,0 +1,15 @@
+services:
+  search-api:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - API_PREFIX=/api/v1
+      - POSTGRES_URI=${POSTGRES_URI}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-vertex}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCP_LOCATION=${GCP_LOCATION:-us-central1}
+      - VERTEX_MODEL=${VERTEX_MODEL:-gemini-embedding-001}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    restart: unless-stopped
