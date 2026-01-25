@@ -25,11 +25,12 @@ func (r *VectorSearchRepository) SearchVersesByEmbedding(ctx context.Context, em
 	vec := pgvector.NewVector(float32Slice(embedding))
 
 	rows, err := r.db.QueryxContext(ctx, `
-		SELECT verse_id, book_id as book, chapter, verse, text,
-		       1 - (embedding <=> $1::vector) as score
-		FROM verses
-		WHERE embedding IS NOT NULL
-		ORDER BY embedding <=> $1::vector
+		SELECT v.osis_verse_id as verse_id, b.osis_id as book, v.chapter, v.verse, v.text,
+		       1 - (v.embedding <=> $1::vector) as score
+		FROM verses v
+		JOIN books b ON v.book_id = b.id
+		WHERE v.embedding IS NOT NULL
+		ORDER BY v.embedding <=> $1::vector
 		LIMIT $2
 	`, vec, topK)
 	if err != nil {
