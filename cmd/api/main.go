@@ -15,7 +15,9 @@ import (
 	"github.com/sola-scriptura-search-api/internal/config"
 	"github.com/sola-scriptura-search-api/internal/handlers"
 	"github.com/sola-scriptura-search-api/internal/middleware"
+	"github.com/sola-scriptura-search-api/internal/repository"
 	"github.com/sola-scriptura-search-api/internal/repository/postgres"
+	"github.com/sola-scriptura-search-api/internal/repository/vertex"
 	"github.com/sola-scriptura-search-api/internal/services"
 	"github.com/sola-scriptura-search-api/pkg/schema/db"
 	pkgservices "github.com/sola-scriptura-search-api/pkg/schema/services"
@@ -46,8 +48,32 @@ func main() {
 
 	// Create repositories
 	pgDB := db.GetPostgres()
-	vectorRepo := postgres.NewVectorSearchRepository(pgDB)
 	topicRepo := postgres.NewTopicRepository(pgDB)
+
+	// Create vector search repository based on configuration
+	var vectorRepo repository.VectorSearchRepository
+	var vertexRepo *vertex.VectorSearchRepository // For cleanup
+
+	switch cfg.VectorBackend {
+	case "vertex":
+		log.Println("Using Vertex AI Vector Search backend")
+		vertexCfg := vertex.Config{
+			ProjectID:            cfg.VertexProjectID,
+			Location:             cfg.VertexLocation,
+			IndexEndpointID:      cfg.VertexIndexEndpointID,
+			DeployedIndexID:      cfg.VertexDeployedIndexID,
+			PublicEndpointDomain: cfg.VertexPublicEndpointDomain,
+		}
+		var err error
+		vertexRepo, err = vertex.NewVectorSearchRepository(ctx, vertexCfg, pgDB)
+		if err != nil {
+			log.Fatalf("Failed to create Vertex AI vector repository: %v", err)
+		}
+		vectorRepo = vertexRepo
+	default:
+		log.Println("Using pgvector backend (unindexed)")
+		vectorRepo = postgres.NewVectorSearchRepository(pgDB)
+	}
 
 	// Create services
 	embeddingsSvc := pkgservices.GetEmbeddingsService()
@@ -101,6 +127,13 @@ func main() {
 
 	if err := db.ClosePostgres(); err != nil {
 		log.Printf("Error closing PostgreSQL: %v", err)
+	}
+
+	// Close Vertex AI client if used
+	if vertexRepo != nil {
+		if err := vertexRepo.Close(); err != nil {
+			log.Printf("Error closing Vertex AI client: %v", err)
+		}
 	}
 
 	log.Println("Server stopped")
