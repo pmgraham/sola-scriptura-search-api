@@ -41,8 +41,9 @@ type Topic struct {
 
 // TopicSearchResult wraps a topic with search score
 type TopicSearchResult struct {
-	Topic Topic   `json:"topic"`
-	Score float64 `json:"score"`
+	Topic      Topic   `json:"topic"`
+	Score      float64 `json:"score"`
+	VerseCount int     `json:"verse_count"`
 }
 
 // SemanticSearchRequest is the request for semantic search
