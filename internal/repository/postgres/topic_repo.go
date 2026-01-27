@@ -86,7 +86,8 @@ func (r *TopicRepository) SearchByWords(ctx context.Context, words []string, top
 				Source:      result.Source,
 				ChapterRefs: result.ChapterRefs,
 			},
-			Score: result.Score,
+			Score:      result.Score,
+			VerseCount: result.VerseCount,
 		})
 	}
 

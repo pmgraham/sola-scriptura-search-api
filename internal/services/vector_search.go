@@ -79,6 +79,7 @@ func (s *VectorSearchService) SearchTopics(ctx context.Context, query string, to
 			Name:        r.Topic.Name,
 			Source:      r.Topic.Source,
 			ChapterRefs: r.Topic.ChapterRefs,
+			VerseCount:  r.VerseCount,
 			Score:       r.Score,
 		}
 	}
