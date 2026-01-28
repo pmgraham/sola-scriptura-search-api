@@ -85,8 +85,18 @@ func (h *SearchHandler) HybridSearch(c echo.Context) error {
 		topics = []models.ScoredTopic{}
 	}
 
+	// Get topic card if there's a strong match (score >= 0.9)
+	var topicCard *models.TopicCard
+	if len(topics) > 0 {
+		topicCard, err = h.vectorSearch.GetTopicCard(ctx, topics, 0.9, 10)
+		if err != nil {
+			c.Logger().Warnf("Topic card fetch failed: %v", err)
+		}
+	}
+
 	return c.JSON(http.StatusOK, models.HybridSearchResponse{
-		Query: req.Query,
+		Query:     req.Query,
+		TopicCard: topicCard,
 		ResourceMatches: models.ResourceMatches{
 			Topics: topics,
 		},

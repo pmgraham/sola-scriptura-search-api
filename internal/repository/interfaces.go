@@ -16,4 +16,6 @@ type VectorSearchRepository interface {
 type TopicRepository interface {
 	// SearchByWords searches topics by keyword matching
 	SearchByWords(ctx context.Context, words []string, topK int) ([]models.TopicSearchResult, error)
+	// GetTopicVerses returns verses mapped to a topic
+	GetTopicVerses(ctx context.Context, topicID string, limit int) ([]models.Citation, error)
 }
