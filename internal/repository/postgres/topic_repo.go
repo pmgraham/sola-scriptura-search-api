@@ -124,7 +124,7 @@ func (r *TopicRepository) GetTopicVerses(ctx context.Context, topicID string, li
 		JOIN api.verses v ON tv.verse_id = v.id
 		JOIN api.books b ON v.book_id = b.id
 		WHERE tv.topic_id = $1
-		ORDER BY b.book_order, v.chapter, v.verse
+		ORDER BY tv.importance_tier, b.book_order, v.chapter, v.verse
 		LIMIT $2
 	`
 
