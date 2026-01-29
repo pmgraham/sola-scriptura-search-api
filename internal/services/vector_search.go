@@ -78,12 +78,71 @@ func (s *VectorSearchService) SearchTopics(ctx context.Context, query string, to
 			TopicID:     r.Topic.TopicID,
 			Name:        r.Topic.Name,
 			Source:      r.Topic.Source,
+			Category:    r.Category,
 			ChapterRefs: r.Topic.ChapterRefs,
 			VerseCount:  r.VerseCount,
 			Score:       r.Score,
 		}
 	}
 	return topics, nil
+}
+
+// preferredSources defines source priority for topic cards (higher index = lower priority)
+var preferredSources = []string{
+	"claude_4.5_opus",
+	"torreys_topical_textbook",
+	"naves_topical_bible",
+}
+
+// GetTopicCard returns a TopicCard for the best matching topic if score is high enough
+// Prefers Claude-curated topics over other sources when available
+func (s *VectorSearchService) GetTopicCard(ctx context.Context, topics []models.ScoredTopic, minScore float64, verseLimit int) (*models.TopicCard, error) {
+	if len(topics) == 0 {
+		return nil, nil
+	}
+
+	// Find the best topic: prefer Claude source, then by score
+	var selectedTopic *models.ScoredTopic
+
+	// First pass: look for preferred sources in order
+	for _, preferredSource := range preferredSources {
+		for i := range topics {
+			if topics[i].Source == preferredSource && topics[i].Score >= minScore {
+				selectedTopic = &topics[i]
+				break
+			}
+		}
+		if selectedTopic != nil {
+			break
+		}
+	}
+
+	// Fallback: use highest scoring topic if no preferred source found
+	if selectedTopic == nil {
+		if topics[0].Score >= minScore {
+			selectedTopic = &topics[0]
+		}
+	}
+
+	if selectedTopic == nil {
+		return nil, nil
+	}
+
+	// Fetch verses for this topic
+	verses, err := s.topicRepo.GetTopicVerses(ctx, selectedTopic.TopicID, verseLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TopicCard{
+		TopicID:    selectedTopic.TopicID,
+		Name:       selectedTopic.Name,
+		Category:   selectedTopic.Category,
+		Source:     selectedTopic.Source,
+		VerseCount: selectedTopic.VerseCount,
+		Score:      selectedTopic.Score,
+		TopVerses:  verses,
+	}, nil
 }
 
 // stopWords contains common words to exclude from search

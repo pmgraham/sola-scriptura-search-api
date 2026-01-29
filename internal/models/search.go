@@ -2,12 +2,12 @@ package models
 
 // Citation represents a cited verse with relevance score
 type Citation struct {
-	VerseID        string   `json:"verse_id"`
-	Text           string   `json:"text"`
-	Book           string   `json:"book"`
-	Chapter        int      `json:"chapter"`
-	Verse          int      `json:"verse"`
-	RelevanceScore *float64 `json:"relevance_score,omitempty"`
+	VerseID        string   `json:"verse_id" db:"verse_id"`
+	Text           string   `json:"text" db:"text"`
+	Book           string   `json:"book" db:"book"`
+	Chapter        int      `json:"chapter" db:"chapter"`
+	Verse          int      `json:"verse" db:"verse"`
+	RelevanceScore *float64 `json:"relevance_score,omitempty" db:"relevance_score"`
 }
 
 // ScoredVerse represents a verse with similarity score
@@ -25,6 +25,7 @@ type ScoredTopic struct {
 	TopicID      string   `json:"topic_id"`
 	Name         string   `json:"name"`
 	Source       string   `json:"source"`
+	Category     string   `json:"category,omitempty"`
 	ChapterRefs  []string `json:"chapter_refs,omitempty"`
 	VerseCount   int      `json:"verse_count"`
 	Score        float64  `json:"score"`
@@ -36,6 +37,7 @@ type Topic struct {
 	TopicID     string   `json:"topic_id"`
 	Name        string   `json:"name"`
 	Source      string   `json:"source"`
+	Category    string   `json:"category,omitempty"`
 	ChapterRefs []string `json:"chapter_refs,omitempty"`
 }
 
@@ -44,6 +46,7 @@ type TopicSearchResult struct {
 	Topic      Topic   `json:"topic"`
 	Score      float64 `json:"score"`
 	VerseCount int     `json:"verse_count"`
+	Category   string  `json:"category,omitempty"`
 }
 
 // SemanticSearchRequest is the request for semantic search
@@ -75,9 +78,21 @@ type SemanticMatches struct {
 	Verses []Citation `json:"verses"`
 }
 
+// TopicCard represents a featured topic with its key verses
+type TopicCard struct {
+	TopicID    string     `json:"topic_id"`
+	Name       string     `json:"name"`
+	Category   string     `json:"category,omitempty"`
+	Source     string     `json:"source,omitempty"`
+	VerseCount int        `json:"verse_count"`
+	Score      float64    `json:"score"`
+	TopVerses  []Citation `json:"top_verses"`
+}
+
 // HybridSearchResponse is the response for hybrid search
 type HybridSearchResponse struct {
 	Query           string          `json:"query"`
+	TopicCard       *TopicCard      `json:"topic_card,omitempty"`
 	ResourceMatches ResourceMatches `json:"resource_matches"`
 	SemanticMatches SemanticMatches `json:"semantic_matches"`
 }
